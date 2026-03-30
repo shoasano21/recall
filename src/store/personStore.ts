@@ -24,7 +24,9 @@ export const usePersonStore = create<PersonStore>((set, get) => ({
 
   load: async () => {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    const persons: Person[] = raw ? JSON.parse(raw) : [];
+    const parsed: Array<Omit<Person, 'tags'> & { tags?: string[] }> = raw ? JSON.parse(raw) : [];
+    // tags フィールドが存在しない古いデータをマイグレーション
+    const persons: Person[] = parsed.map((p) => ({ ...p, tags: p.tags ?? [] }));
     set({ persons, isLoaded: true });
   },
 
@@ -66,6 +68,7 @@ export const usePersonStore = create<PersonStore>((set, get) => ({
         relationship: '取引先',
         hobby: 'ゴルフ、読書',
         hometown: '大阪府',
+        tags: ['取引先', 'ビジネス'],
         createdAt: now,
         updatedAt: now,
       },
@@ -76,6 +79,7 @@ export const usePersonStore = create<PersonStore>((set, get) => ({
         relationship: '同期',
         hobby: '料理、旅行',
         hometown: '東京都',
+        tags: ['同期', '大学'],
         createdAt: now,
         updatedAt: now,
       },
@@ -85,6 +89,7 @@ export const usePersonStore = create<PersonStore>((set, get) => ({
         organization: '△△株式会社',
         relationship: '上司',
         hometown: '福岡県',
+        tags: ['ビジネス', '上司'],
         createdAt: now,
         updatedAt: now,
       },

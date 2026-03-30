@@ -11,11 +11,13 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { Person } from '../types';
 import { Colors, Spacing, FontSize, BorderRadius } from '../constants/theme';
+import { usePersonStore } from '../store/personStore';
+import TagInput from './TagInput';
 
 type FormData = Omit<Person, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -33,7 +35,15 @@ export default function PersonForm({ mode, initialValues = {}, onSubmit, onDelet
   const [hobby, setHobby] = useState(initialValues.hobby ?? '');
   const [hometown, setHometown] = useState(initialValues.hometown ?? '');
   const [note, setNote] = useState(initialValues.note ?? '');
+  const [tags, setTags] = useState<string[]>(initialValues.tags ?? []);
   const [photoUri, setPhotoUri] = useState<string | undefined>(initialValues.photoUri);
+
+  const allPersons = usePersonStore((s) => s.persons);
+  const existingTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    allPersons.forEach((p) => p.tags.forEach((t) => tagSet.add(t)));
+    return Array.from(tagSet).sort();
+  }, [allPersons]);
 
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [nameError, setNameError] = useState('');
@@ -79,6 +89,7 @@ export default function PersonForm({ mode, initialValues = {}, onSubmit, onDelet
         hobby: hobby.trim() || undefined,
         hometown: hometown.trim() || undefined,
         note: note.trim() || undefined,
+        tags,
         photoUri,
       });
     } finally {
@@ -172,6 +183,17 @@ export default function PersonForm({ mode, initialValues = {}, onSubmit, onDelet
               placeholderTextColor={Colors.textSecondary}
               returnKeyType="next"
               autoCorrect={false}
+            />
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.fieldRow}>
+            <Text style={styles.label}>タグ</Text>
+            <TagInput
+              value={tags}
+              onChange={setTags}
+              suggestions={existingTags}
             />
           </View>
         </View>

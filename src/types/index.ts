@@ -7,6 +7,7 @@ export type Person = {
   hobby?: string;
   hometown?: string;
   note?: string;
+  tags: string[];
   createdAt: string;
   updatedAt: string;
 };

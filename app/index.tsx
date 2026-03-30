@@ -3,6 +3,7 @@ import {
   Text,
   FlatList,
   TextInput,
+  ScrollView,
   StyleSheet,
   Pressable,
 } from 'react-native';
@@ -13,7 +14,6 @@ import { usePersonStore } from '../src/store/personStore';
 import { useLogStore } from '../src/store/logStore';
 import PersonCard from '../src/components/PersonCard';
 import { Colors, Spacing, FontSize, BorderRadius } from '../src/constants/theme';
-import { Person } from '../src/types';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -21,6 +21,7 @@ export default function HomeScreen() {
   const isLoaded = usePersonStore((s) => s.isLoaded);
   const logs = useLogStore((s) => s.logs);
   const [query, setQuery] = useState('');
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   // personId → 最新の会話日時のマップ
   const lastMetMap = useMemo(() => {
@@ -33,15 +34,33 @@ export default function HomeScreen() {
     return map;
   }, [logs]);
 
+  // 全タグ一覧（使用中のもの）
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    persons.forEach((p) => p.tags.forEach((t) => tagSet.add(t)));
+    return Array.from(tagSet).sort();
+  }, [persons]);
+
+  // 検索 + タグの複合フィルタ
   const filtered = useMemo(() => {
-    if (!query.trim()) return persons;
-    const q = query.toLowerCase();
-    return persons.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        (p.organization?.toLowerCase().includes(q) ?? false)
-    );
-  }, [persons, query]);
+    let result = persons;
+    if (selectedTag) {
+      result = result.filter((p) => p.tags.includes(selectedTag));
+    }
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.organization?.toLowerCase().includes(q) ?? false)
+      );
+    }
+    return result;
+  }, [persons, query, selectedTag]);
+
+  const toggleTag = (tag: string) => {
+    setSelectedTag((prev) => (prev === tag ? null : tag));
+  };
 
   return (
     <View style={styles.container}>
@@ -75,6 +94,42 @@ export default function HomeScreen() {
         />
       </View>
 
+      {/* タグフィルター */}
+      {allTags.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tagFilterContent}
+          style={styles.tagFilterRow}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Pressable
+            style={[styles.filterChip, !selectedTag && styles.filterChipSelected]}
+            onPress={() => setSelectedTag(null)}
+          >
+            <Text style={[styles.filterChipText, !selectedTag && styles.filterChipTextSelected]}>
+              すべて
+            </Text>
+          </Pressable>
+          {allTags.map((tag) => (
+            <Pressable
+              key={tag}
+              style={[styles.filterChip, selectedTag === tag && styles.filterChipSelected]}
+              onPress={() => toggleTag(tag)}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  selectedTag === tag && styles.filterChipTextSelected,
+                ]}
+              >
+                {tag}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+
       {/* リスト */}
       {isLoaded && persons.length === 0 ? (
         <EmptyState onAdd={() => router.push('/person/new')} />
@@ -92,9 +147,9 @@ export default function HomeScreen() {
           contentContainerStyle={styles.listContent}
           contentInsetAdjustmentBehavior="automatic"
           ListEmptyComponent={
-            query ? (
-              <Text style={styles.noResults}>「{query}」に一致する人物が見つかりません</Text>
-            ) : null
+            <Text style={styles.noResults}>
+              {selectedTag ? `「${selectedTag}」タグの人物が見つかりません` : `「${query}」に一致する人物が見つかりません`}
+            </Text>
           }
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -134,7 +189,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
     marginHorizontal: Spacing.md,
     marginTop: Spacing.md,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
     paddingHorizontal: Spacing.md,
     height: 44,
     borderWidth: 1,
@@ -148,9 +203,39 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     color: Colors.textPrimary,
   },
+  // タグフィルター
+  tagFilterRow: {
+    marginBottom: Spacing.xs,
+  },
+  tagFilterContent: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    gap: Spacing.xs,
+  },
+  filterChip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.tagBackground,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  filterChipSelected: {
+    backgroundColor: Colors.accent,
+  },
+  filterChipText: {
+    fontSize: FontSize.sm,
+    color: Colors.accent,
+    fontWeight: '600',
+  },
+  filterChipTextSelected: {
+    color: Colors.white,
+  },
+  // リスト
   listContent: {
     paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.sm,
     paddingBottom: Spacing.xxl,
   },
   noResults: {
