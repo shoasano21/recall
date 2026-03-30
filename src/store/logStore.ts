@@ -12,6 +12,7 @@ type LogStore = {
   update: (id: string, updates: Partial<Omit<ConversationLog, 'id' | 'personId' | 'createdAt'>>) => Promise<void>;
   remove: (id: string) => Promise<void>;
   removeByPersonId: (personId: string) => Promise<void>;
+  bulkSet: (logs: ConversationLog[]) => Promise<void>;
   getByPersonId: (personId: string) => ConversationLog[];
   seedIfEmpty: () => Promise<void>;
 };
@@ -55,6 +56,11 @@ export const useLogStore = create<LogStore>((set, get) => ({
 
   removeByPersonId: async (personId) => {
     const logs = get().logs.filter((l) => l.personId !== personId);
+    set({ logs });
+    await persist(logs);
+  },
+
+  bulkSet: async (logs) => {
     set({ logs });
     await persist(logs);
   },

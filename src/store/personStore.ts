@@ -11,6 +11,7 @@ type PersonStore = {
   add: (person: Omit<Person, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   update: (id: string, updates: Partial<Omit<Person, 'id' | 'createdAt'>>) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  bulkSet: (persons: Person[]) => Promise<void>;
   seedIfEmpty: () => Promise<void>;
 };
 
@@ -57,8 +58,36 @@ export const usePersonStore = create<PersonStore>((set, get) => ({
     await persist(persons);
   },
 
+  bulkSet: async (persons) => {
+    set({ persons });
+    await persist(persons);
+  },
+
   seedIfEmpty: async () => {
-    if (get().persons.length > 0) return;
+    const persons = get().persons;
+
+    // シードIDのデータが存在するが tags が空の場合 → タグだけ補完して終了
+    const seedIds = ['seed-1', 'seed-2', 'seed-3'];
+    const seedTagMap: Record<string, string[]> = {
+      'seed-1': ['取引先', 'ビジネス'],
+      'seed-2': ['同期', '大学'],
+      'seed-3': ['ビジネス', '上司'],
+    };
+    const needsTagPatch = persons.some(
+      (p) => seedIds.includes(p.id) && p.tags.length === 0
+    );
+    if (needsTagPatch) {
+      const patched = persons.map((p) =>
+        seedIds.includes(p.id) && p.tags.length === 0
+          ? { ...p, tags: seedTagMap[p.id] ?? [] }
+          : p
+      );
+      set({ persons: patched });
+      await persist(patched);
+      return;
+    }
+
+    if (persons.length > 0) return;
     const now = new Date().toISOString();
     const seeds: Person[] = [
       {

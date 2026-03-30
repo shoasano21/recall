@@ -37,6 +37,7 @@ export default function RootLayout() {
         <Stack.Screen name="person/[id]/edit" options={{ title: '編集', presentation: 'modal' }} />
         <Stack.Screen name="person/[id]/log/new" options={{ title: '会話を追加', presentation: 'modal' }} />
         <Stack.Screen name="person/[id]/log/[logId]" options={{ title: '会話を編集', presentation: 'modal' }} />
+        <Stack.Screen name="settings" options={{ title: '設定' }} />
       </Stack>
       {showSplash && <AppSplash onFinish={() => setShowSplash(false)} />}
     </>

@@ -34,11 +34,16 @@ export default function HomeScreen() {
     return map;
   }, [logs]);
 
-  // 全タグ一覧（使用中のもの）
+  // 全タグ一覧（使用人数の多い順、同数は五十音順）
   const allTags = useMemo(() => {
-    const tagSet = new Set<string>();
-    persons.forEach((p) => p.tags.forEach((t) => tagSet.add(t)));
-    return Array.from(tagSet).sort();
+    const countMap: Record<string, number> = {};
+    persons.forEach((p) => p.tags.forEach((t) => {
+      countMap[t] = (countMap[t] ?? 0) + 1;
+    }));
+    return Object.keys(countMap).sort((a, b) => {
+      const diff = countMap[b] - countMap[a];
+      return diff !== 0 ? diff : a.localeCompare(b, 'ja');
+    });
   }, [persons]);
 
   // 検索 + タグの複合フィルタ
@@ -69,13 +74,22 @@ export default function HomeScreen() {
         options={{
           title: 'Karte',
           headerRight: () => (
-            <Pressable
-              onPress={() => router.push('/person/new')}
-              hitSlop={12}
-              style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
-            >
-              <Ionicons name="add" size={28} color={Colors.accent} />
-            </Pressable>
+            <View style={styles.headerButtons}>
+              <Pressable
+                onPress={() => router.push('/settings')}
+                hitSlop={12}
+                style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
+              >
+                <Ionicons name="settings-outline" size={22} color={Colors.textSecondary} />
+              </Pressable>
+              <Pressable
+                onPress={() => router.push('/person/new')}
+                hitSlop={12}
+                style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
+              >
+                <Ionicons name="add" size={28} color={Colors.accent} />
+              </Pressable>
+            </View>
           ),
         }}
       />
@@ -182,6 +196,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -205,18 +224,20 @@ const styles = StyleSheet.create({
   },
   // タグフィルター
   tagFilterRow: {
+    flexGrow: 0,
     marginBottom: Spacing.xs,
   },
   tagFilterContent: {
     flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     gap: Spacing.xs,
   },
   filterChip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs + 2,
-    borderRadius: BorderRadius.full,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 8,
     backgroundColor: Colors.tagBackground,
     borderWidth: 1.5,
     borderColor: 'transparent',
@@ -225,7 +246,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accent,
   },
   filterChipText: {
-    fontSize: FontSize.sm,
+    fontSize: 13,
     color: Colors.accent,
     fontWeight: '600',
   },
