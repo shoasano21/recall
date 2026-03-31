@@ -7,7 +7,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "postinstall": "node -e \"require('fs').mkdirSync('.expo/web/cache/production/images', { recursive: true })\""
+    "postinstall": "node -e \"const path=require('path'); const fs=require('fs'); fs.mkdirSync(path.join(process.cwd(), '.expo/web/cache/production/images'), { recursive: true });\""
   },
   "dependencies": {
     "@expo-google-fonts/cormorant-garamond": "^0.4.1",
