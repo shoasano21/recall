@@ -37,9 +37,6 @@
         "android.permission.READ_EXTERNAL_STORAGE"
       ]
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
     "plugins": [
       "expo-router",
       "@react-native-community/datetimepicker",
