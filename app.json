@@ -50,6 +50,9 @@
       ],
       "expo-font"
     ],
+    "_experiments": {
+      "baseUrl": ""
+    },
     "extra": {
       "router": {},
       "eas": {
