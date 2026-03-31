@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.shoas.recall",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "プロフィール写真を選択するために写真へのアクセスが必要です。",
         "NSCameraUsageDescription": "プロフィール写真を撮影するためにカメラへのアクセスが必要です。",
