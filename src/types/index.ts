@@ -6,6 +6,7 @@ export type Person = {
   photoUri?: string;
   hobby?: string;
   hometown?: string;
+  highSchool?: string;
   note?: string;
   tags: string[];
   nextMeetingDate?: string; // ISO date string (YYYY-MM-DD)
@@ -30,5 +31,6 @@ export type Schedule = {
   date: string; // ISO datetime string
   note?: string;
   notificationId?: string; // expo-notifications identifier
+  source?: 'nextMeeting'; // 'nextMeeting' = 「次に会う日」から自動生成された予定
   createdAt: string;
 };

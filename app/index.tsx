@@ -135,9 +135,9 @@ export default function HomeScreen() {
           headerRight: () => (
             <Pressable
               onPress={() => router.push('/settings')}
-              style={({ pressed }) => [styles.headerButton, { opacity: pressed ? 0.5 : 1 }]}
+              style={({ pressed }) => ({ padding: 8, opacity: pressed ? 0.5 : 1 })}
             >
-              <Ionicons name="settings-outline" size={28} color={Colors.textSecondary} />
+              <Ionicons name="settings-outline" size={26} color={Colors.accent} />
             </Pressable>
           ),
         }}

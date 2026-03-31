@@ -1,25 +1,27 @@
-import { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import { useState } from 'react';
+import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, BorderRadius } from '../constants/theme';
+import { PRESET_TAGS } from '../constants/tags';
 
 type Props = {
   value: string[];
   onChange: (tags: string[]) => void;
-  suggestions: string[]; // 既存タグ全件（フィルタリングは内部で行う）
+  suggestions?: string[]; // 後方互換のために残す（未使用）
 };
 
-export default function TagInput({ value, onChange, suggestions }: Props) {
+export default function TagInput({ value, onChange }: Props) {
   const [input, setInput] = useState('');
 
-  const addTag = () => {
+  const togglePreset = (tag: string) => {
+    if (value.includes(tag)) {
+      onChange(value.filter((t) => t !== tag));
+    } else {
+      onChange([...value, tag]);
+    }
+  };
+
+  const addCustom = () => {
     const tag = input.trim();
     if (tag && !value.includes(tag)) {
       onChange([...value, tag]);
@@ -27,55 +29,52 @@ export default function TagInput({ value, onChange, suggestions }: Props) {
     setInput('');
   };
 
-  const removeTag = (tag: string) => {
+  const removeCustom = (tag: string) => {
     onChange(value.filter((t) => t !== tag));
   };
 
-  const addFromSuggestion = (tag: string) => {
-    if (!value.includes(tag)) {
-      onChange([...value, tag]);
-    }
-    setInput('');
-  };
-
-  // まだ追加していない候補。入力中なら前方一致でフィルタ
-  const visibleSuggestions = useMemo(() => {
-    const available = suggestions.filter((s) => !value.includes(s));
-    if (!input.trim()) return available;
-    return available.filter((s) => s.includes(input.trim()));
-  }, [suggestions, value, input]);
+  // 固定タグ以外の選択済みタグ（カスタム）
+  const customTags = value.filter((t) => !PRESET_TAGS.includes(t));
 
   return (
     <View style={styles.container}>
-      {/* 追加済みタグ */}
-      {value.length > 0 && (
-        <View style={styles.chipRow}>
-          {value.map((tag) => (
-            <View key={tag} style={styles.chip}>
-              <Text style={styles.chipText}>{tag}</Text>
-              <Pressable onPress={() => removeTag(tag)} hitSlop={4}>
-                <Ionicons name="close" size={13} color={Colors.accent} />
-              </Pressable>
-            </View>
-          ))}
-        </View>
-      )}
+      {/* 固定タグチップ一覧 */}
+      <View style={styles.presetGrid}>
+        {PRESET_TAGS.map((tag) => {
+          const selected = value.includes(tag);
+          return (
+            <Pressable
+              key={tag}
+              onPress={() => togglePreset(tag)}
+              style={({ pressed }) => [
+                styles.chip,
+                selected ? styles.chipSelected : styles.chipUnselected,
+                pressed && styles.chipPressed,
+              ]}
+            >
+              <Text style={[styles.chipText, selected ? styles.chipTextSelected : styles.chipTextUnselected]}>
+                {tag}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
-      {/* 入力行 */}
+      {/* 自由入力欄 */}
       <View style={styles.inputRow}>
         <TextInput
           style={styles.input}
           value={input}
           onChangeText={setInput}
-          onSubmitEditing={addTag}
-          placeholder="タグを入力..."
+          onSubmitEditing={addCustom}
+          placeholder="カスタムタグを追加..."
           placeholderTextColor={Colors.textSecondary}
           returnKeyType="done"
           blurOnSubmit={false}
         />
         {input.trim().length > 0 && (
           <Pressable
-            onPress={addTag}
+            onPress={addCustom}
             style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.7 }]}
           >
             <Text style={styles.addButtonText}>追加</Text>
@@ -83,25 +82,18 @@ export default function TagInput({ value, onChange, suggestions }: Props) {
         )}
       </View>
 
-      {/* サジェスト */}
-      {visibleSuggestions.length > 0 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.suggestions}
-          keyboardShouldPersistTaps="handled"
-        >
-          {visibleSuggestions.map((s) => (
-            <Pressable
-              key={s}
-              onPress={() => addFromSuggestion(s)}
-              style={({ pressed }) => [styles.suggestionChip, pressed && { opacity: 0.7 }]}
-            >
-              <Ionicons name="add" size={12} color={Colors.textSecondary} />
-              <Text style={styles.suggestionText}>{s}</Text>
-            </Pressable>
+      {/* 追加済みカスタムタグ */}
+      {customTags.length > 0 && (
+        <View style={styles.customRow}>
+          {customTags.map((tag) => (
+            <View key={tag} style={styles.customChip}>
+              <Text style={styles.customChipText}>{tag}</Text>
+              <Pressable onPress={() => removeCustom(tag)} hitSlop={4}>
+                <Ionicons name="close" size={13} color={Colors.accent} />
+              </Pressable>
+            </View>
           ))}
-        </ScrollView>
+        </View>
       )}
     </View>
   );
@@ -110,25 +102,39 @@ export default function TagInput({ value, onChange, suggestions }: Props) {
 const styles = StyleSheet.create({
   container: {
     gap: Spacing.sm,
+    paddingTop: Spacing.xs,
   },
-  chipRow: {
+  presetGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.xs,
   },
   chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: Colors.tagBackground,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+  },
+  chipSelected: {
+    backgroundColor: Colors.accent,
+    borderColor: Colors.accent,
+  },
+  chipUnselected: {
+    backgroundColor: Colors.white,
+    borderColor: Colors.border,
+  },
+  chipPressed: {
+    opacity: 0.7,
   },
   chipText: {
-    fontSize: FontSize.xs,
-    color: Colors.accent,
+    fontSize: FontSize.sm,
     fontWeight: '600',
+  },
+  chipTextSelected: {
+    color: Colors.white,
+  },
+  chipTextUnselected: {
+    color: Colors.textSecondary,
   },
   inputRow: {
     flexDirection: 'row',
@@ -154,24 +160,23 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontWeight: '600',
   },
-  suggestions: {
+  customRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.xs,
-    paddingBottom: 2,
   },
-  suggestionChip: {
+  customChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    backgroundColor: Colors.background,
+    gap: 4,
+    backgroundColor: Colors.tagBackground,
     borderRadius: 4,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
-  suggestionText: {
+  customChipText: {
     fontSize: FontSize.xs,
-    color: Colors.textSecondary,
+    color: Colors.accent,
+    fontWeight: '600',
   },
 });

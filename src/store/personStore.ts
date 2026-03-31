@@ -8,7 +8,7 @@ type PersonStore = {
   persons: Person[];
   isLoaded: boolean;
   load: () => Promise<void>;
-  add: (person: Omit<Person, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  add: (person: Omit<Person, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Person>;
   update: (id: string, updates: Partial<Omit<Person, 'id' | 'createdAt'>>) => Promise<void>;
   remove: (id: string) => Promise<void>;
   bulkSet: (persons: Person[]) => Promise<void>;
@@ -27,7 +27,11 @@ export const usePersonStore = create<PersonStore>((set, get) => ({
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     const parsed: Array<Omit<Person, 'tags'> & { tags?: string[] }> = raw ? JSON.parse(raw) : [];
     // tags フィールドが存在しない古いデータをマイグレーション
-    const persons: Person[] = parsed.map((p) => ({ ...p, tags: p.tags ?? [] }));
+    const persons: Person[] = parsed.map((p) => ({
+      ...p,
+      tags: p.tags ?? [],
+      highSchool: p.highSchool ?? undefined,
+    }));
     set({ persons, isLoaded: true });
   },
 
@@ -42,6 +46,7 @@ export const usePersonStore = create<PersonStore>((set, get) => ({
     const persons = [...get().persons, person];
     set({ persons });
     await persist(persons);
+    return person;
   },
 
   update: async (id, updates) => {

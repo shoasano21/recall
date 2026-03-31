@@ -38,7 +38,7 @@ export default function PersonDetailScreen() {
   }
 
   const metaParts = [person.organization, person.relationship].filter(Boolean);
-  const hasDetails = person.hobby || person.hometown || person.note;
+  const hasDetails = person.hobby || person.hometown || person.highSchool || person.note;
 
   return (
     <View style={styles.container}>
@@ -48,8 +48,7 @@ export default function PersonDetailScreen() {
           headerRight: () => (
             <Pressable
               onPress={() => router.push(`/person/${id}/edit`)}
-              hitSlop={12}
-              style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
+              style={({ pressed }) => ({ padding: 8, opacity: pressed ? 0.5 : 1 })}
             >
               <Ionicons name="pencil-outline" size={22} color={Colors.accent} />
             </Pressable>
@@ -74,6 +73,15 @@ export default function PersonDetailScreen() {
           {metaParts.length > 0 && (
             <Text style={styles.meta}>{metaParts.join('  ·  ')}</Text>
           )}
+          {person.tags.length > 0 && (
+            <View style={styles.tagRow}>
+              {person.tags.map((tag) => (
+                <View key={tag} style={styles.tagChip}>
+                  <Text style={styles.tagChipText}>{tag}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* ── 詳細メモセクション ── */}
@@ -83,8 +91,8 @@ export default function PersonDetailScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>詳細情報</Text>
 
-              {/* 趣味・出身地カード */}
-              {(person.hobby || person.hometown) && (
+              {/* 趣味・出身地・出身高校カード */}
+              {(person.hobby || person.hometown || person.highSchool) && (
                 <View style={styles.detailCard}>
                   {person.hobby && (
                     <View style={styles.detailRow}>
@@ -99,6 +107,15 @@ export default function PersonDetailScreen() {
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>出身地</Text>
                       <Text style={styles.detailValue}>{person.hometown}</Text>
+                    </View>
+                  )}
+                  {(person.hobby || person.hometown) && person.highSchool && (
+                    <View style={styles.detailDivider} />
+                  )}
+                  {person.highSchool && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>出身高校</Text>
+                      <Text style={styles.detailValue}>{person.highSchool}</Text>
                     </View>
                   )}
                 </View>
@@ -230,6 +247,24 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     color: Colors.textSecondary,
     textAlign: 'center',
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    marginTop: Spacing.xs,
+  },
+  tagChip: {
+    backgroundColor: Colors.tagBackground,
+    borderRadius: BorderRadius.full,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+  },
+  tagChipText: {
+    fontSize: 11,
+    color: Colors.accent,
+    fontWeight: '600',
   },
 
   // ── セクション共通 ──

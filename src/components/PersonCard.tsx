@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Animated, Pressable, View, Text, StyleSheet } from 'react-native';
+import { Animated, Pressable, View, Text, Image, StyleSheet } from 'react-native';
 import { Person } from '../types';
 import { Colors, Spacing, FontSize, BorderRadius } from '../constants/theme';
 
@@ -40,9 +40,13 @@ export default function PersonCard({ person, lastMetDate, onPress }: Props) {
     <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
       <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
         {/* Avatar */}
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitials(person.name)}</Text>
-        </View>
+        {person.photoUri ? (
+          <Image source={{ uri: person.photoUri }} style={styles.avatarPhoto} />
+        ) : (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{getInitials(person.name)}</Text>
+          </View>
+        )}
 
         {/* Info */}
         <View style={styles.info}>
@@ -115,6 +119,13 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: Spacing.md,
+    flexShrink: 0,
+  },
+  avatarPhoto: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.full,
     marginRight: Spacing.md,
     flexShrink: 0,
   },
