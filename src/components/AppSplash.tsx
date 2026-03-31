@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 64,
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: 'CormorantGaramond_600SemiBold',
     color: '#FFFFFF',
     letterSpacing: 2,
   },

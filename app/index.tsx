@@ -10,7 +10,7 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useMemo } from 'react';
-import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
+import { useFonts, CormorantGaramond_600SemiBold } from '@expo-google-fonts/cormorant-garamond';
 import { usePersonStore } from '../src/store/personStore';
 import { useLogStore } from '../src/store/logStore';
 import PersonCard from '../src/components/PersonCard';
@@ -18,7 +18,7 @@ import { Colors, Spacing, FontSize, BorderRadius } from '../src/constants/theme'
 
 export default function HomeScreen() {
   const router = useRouter();
-  useFonts({ PlayfairDisplay_700Bold });
+  useFonts({ CormorantGaramond_600SemiBold });
   const persons = usePersonStore((s) => s.persons);
   const isLoaded = usePersonStore((s) => s.isLoaded);
   const logs = useLogStore((s) => s.logs);
@@ -205,10 +205,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   headerTitle: {
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: 'CormorantGaramond_600SemiBold',
     fontSize: 30,
     color: Colors.textPrimary,
-    letterSpacing: 1.5,
+    letterSpacing: 2,
   },
   headerButtons: {
     flexDirection: 'row',
