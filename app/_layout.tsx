@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
-import { useFonts, CormorantGaramond_600SemiBold } from '@expo-google-fonts/cormorant-garamond';
+import { useFonts, Raleway_700Bold } from '@expo-google-fonts/raleway';
 import { usePersonStore } from '../src/store/personStore';
 import { useLogStore } from '../src/store/logStore';
 import { useScheduleStore } from '../src/store/scheduleStore';
@@ -26,7 +26,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true);
-  const [fontsLoaded] = useFonts({ CormorantGaramond_600SemiBold });
+  const [fontsLoaded] = useFonts({ Raleway_700Bold });
 
   useEffect(() => {
     if (!fontsLoaded) return;

@@ -37,7 +37,7 @@ export default function LogForm({ mode, initialValues = {}, onSubmit, onDelete }
   const [date, setDate] = useState(
     initialValues.date ? new Date(initialValues.date) : new Date()
   );
-  const [showAndroidPicker, setShowAndroidPicker] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
   const [isOnline, setIsOnline] = useState(initialValues.isOnline ?? false);
   const [location, setLocation] = useState(initialValues.location ?? '');
   const [content, setContent] = useState(initialValues.content ?? '');
@@ -48,7 +48,7 @@ export default function LogForm({ mode, initialValues = {}, onSubmit, onDelete }
   const [isDeleting, setIsDeleting] = useState(false);
 
   const onDateChange = (_: DateTimePickerEvent, selected?: Date) => {
-    if (Platform.OS === 'android') setShowAndroidPicker(false);
+    if (Platform.OS !== 'ios') setShowPicker(false);
     if (selected) setDate(selected);
   };
 
@@ -110,30 +110,19 @@ export default function LogForm({ mode, initialValues = {}, onSubmit, onDelete }
         <View style={styles.card}>
           <View style={styles.fieldRow}>
             <Text style={styles.label}>会話した日</Text>
-            {Platform.OS === 'ios' ? (
-              <DateTimePicker
-                value={date}
-                mode="date"
-                display="compact"
-                onChange={onDateChange}
-                locale="ja"
-                style={styles.iosDatePicker}
-              />
-            ) : (
-              <Pressable
-                onPress={() => setShowAndroidPicker(true)}
-                style={({ pressed }) => [styles.androidDateButton, pressed && { opacity: 0.7 }]}
-              >
-                <Text style={styles.androidDateText}>{formatDisplayDate(date)}</Text>
-                <Ionicons name="chevron-down" size={14} color={Colors.textSecondary} />
-              </Pressable>
-            )}
+            <Pressable
+              onPress={() => setShowPicker(true)}
+              style={({ pressed }) => [styles.androidDateButton, pressed && { opacity: 0.7 }]}
+            >
+              <Text style={styles.androidDateText}>{formatDisplayDate(date)}</Text>
+              <Ionicons name="chevron-down" size={14} color={Colors.textSecondary} />
+            </Pressable>
           </View>
-          {showAndroidPicker && (
+          {showPicker && (
             <DateTimePicker
               value={date}
               mode="date"
-              display="default"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               onChange={onDateChange}
             />
           )}
@@ -345,10 +334,6 @@ const styles = StyleSheet.create({
   },
 
   // 日付ピッカー
-  iosDatePicker: {
-    alignSelf: 'flex-start',
-    marginLeft: -8,
-  },
   androidDateButton: {
     flexDirection: 'row',
     alignItems: 'center',

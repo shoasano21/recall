@@ -20,7 +20,8 @@
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "プロフィール写真を選択するために写真へのアクセスが必要です。",
         "NSCameraUsageDescription": "プロフィール写真を撮影するためにカメラへのアクセスが必要です。",
-        "NSUserNotificationsUsageDescription": "次に会う日や予定の前日にリマインダーを送るために通知を使用します。"
+        "NSUserNotificationsUsageDescription": "次に会う日や予定の前日にリマインダーを送るために通知を使用します。",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {

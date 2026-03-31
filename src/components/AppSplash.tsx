@@ -56,9 +56,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 64,
-    fontFamily: 'CormorantGaramond_600SemiBold',
+    fontFamily: 'Raleway_700Bold',
     color: '#FFFFFF',
-    letterSpacing: 2,
+    letterSpacing: 1,
   },
   tagline: {
     fontSize: FontSize.sm,

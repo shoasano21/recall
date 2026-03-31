@@ -10,7 +10,7 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useMemo } from 'react';
-import { useFonts, CormorantGaramond_600SemiBold } from '@expo-google-fonts/cormorant-garamond';
+import { useFonts, Raleway_700Bold } from '@expo-google-fonts/raleway';
 import { usePersonStore } from '../src/store/personStore';
 import { useLogStore } from '../src/store/logStore';
 import PersonCard from '../src/components/PersonCard';
@@ -18,7 +18,7 @@ import { Colors, Spacing, FontSize, BorderRadius } from '../src/constants/theme'
 
 export default function HomeScreen() {
   const router = useRouter();
-  useFonts({ CormorantGaramond_600SemiBold });
+  useFonts({ Raleway_700Bold });
   const persons = usePersonStore((s) => s.persons);
   const isLoaded = usePersonStore((s) => s.isLoaded);
   const logs = useLogStore((s) => s.logs);
@@ -90,12 +90,6 @@ export default function HomeScreen() {
                 style={({ pressed }) => [styles.headerButton, { opacity: pressed ? 0.5 : 1 }]}
               >
                 <Ionicons name="calendar-outline" size={24} color={Colors.textSecondary} />
-              </Pressable>
-              <Pressable
-                onPress={() => router.push('/person/new')}
-                style={({ pressed }) => [styles.headerButton, { opacity: pressed ? 0.5 : 1 }]}
-              >
-                <Ionicons name="add" size={28} color={Colors.accent} />
               </Pressable>
             </View>
           ),
@@ -178,6 +172,14 @@ export default function HomeScreen() {
           keyboardDismissMode="on-drag"
         />
       )}
+
+      {/* FAB */}
+      <Pressable
+        onPress={() => router.push('/person/new')}
+        style={({ pressed }) => [styles.fab, { opacity: pressed ? 0.85 : 1 }]}
+      >
+        <Ionicons name="add" size={36} color={Colors.white} />
+      </Pressable>
     </View>
   );
 }
@@ -205,8 +207,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   headerTitle: {
-    fontFamily: 'CormorantGaramond_600SemiBold',
-    fontSize: 30,
+    fontFamily: 'Raleway_700Bold',
+    fontSize: 32,
     color: Colors.textPrimary,
     letterSpacing: 2,
   },
@@ -277,7 +279,23 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.sm,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: 100,
+  },
+  fab: {
+    position: 'absolute',
+    right: Spacing.lg,
+    bottom: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   noResults: {
     textAlign: 'center',

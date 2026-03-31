@@ -67,11 +67,12 @@ export const usePersonStore = create<PersonStore>((set, get) => ({
     const persons = get().persons;
 
     // シードIDのデータが存在するが tags が空の場合 → タグだけ補完して終了
-    const seedIds = ['seed-1', 'seed-2', 'seed-3'];
+    const seedIds = ['seed-1', 'seed-2', 'seed-3', 'seed-4'];
     const seedTagMap: Record<string, string[]> = {
       'seed-1': ['取引先', 'ビジネス'],
       'seed-2': ['同期', '大学'],
       'seed-3': ['ビジネス', '上司'],
+      'seed-4': ['友人', 'プライベート'],
     };
     const needsTagPatch = persons.some(
       (p) => seedIds.includes(p.id) && p.tags.length === 0
@@ -93,10 +94,11 @@ export const usePersonStore = create<PersonStore>((set, get) => ({
       {
         id: 'seed-1',
         name: '田中 誠',
-        organization: '株式会社サンプル',
+        organization: '株式会社テクノロジーズ',
         relationship: '取引先',
         hobby: 'ゴルフ、読書',
         hometown: '大阪府',
+        memo: '**得意分野**: マーケティング戦略\n- 月次MTGは第2水曜日\n- コーヒーはブラック派',
         tags: ['取引先', 'ビジネス'],
         createdAt: now,
         updatedAt: now,
@@ -104,10 +106,11 @@ export const usePersonStore = create<PersonStore>((set, get) => ({
       {
         id: 'seed-2',
         name: '佐藤 美咲',
-        organization: '〇〇大学',
+        organization: '〇〇大学 情報学部',
         relationship: '同期',
-        hobby: '料理、旅行',
+        hobby: '料理、旅行、写真',
         hometown: '東京都',
+        memo: '就活中。Web系志望。\nポートフォリオ作成を手伝う約束をした。',
         tags: ['同期', '大学'],
         createdAt: now,
         updatedAt: now,
@@ -115,10 +118,24 @@ export const usePersonStore = create<PersonStore>((set, get) => ({
       {
         id: 'seed-3',
         name: '鈴木 健太',
-        organization: '△△株式会社',
+        organization: '△△株式会社 営業部',
         relationship: '上司',
+        hobby: 'ランニング、筋トレ',
         hometown: '福岡県',
+        memo: '毎朝7時出社。\n**注意**: 報告・連絡・相談は必ず対面で。',
         tags: ['ビジネス', '上司'],
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: 'seed-4',
+        name: '山本 花',
+        organization: 'フリーランス（デザイナー）',
+        relationship: '友人',
+        hobby: 'カフェ巡り、映画',
+        hometown: '神奈川県',
+        memo: 'UIデザインが得意。\nコラボ案件の相談ができそう。',
+        tags: ['友人', 'プライベート'],
         createdAt: now,
         updatedAt: now,
       },

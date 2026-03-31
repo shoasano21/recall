@@ -213,7 +213,7 @@ export default function PersonForm({ mode, initialValues = {}, onSubmit, onDelet
             >
               <Text style={nextMeetingDate ? styles.dateText : styles.datePlaceholder}>
                 {nextMeetingDate
-                  ? new Date(nextMeetingDate).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })
+                  ? (() => { const d = new Date(nextMeetingDate); return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`; })()
                   : '日付を選択'}
               </Text>
               <Ionicons name="calendar-outline" size={18} color={Colors.accent} />
@@ -227,7 +227,7 @@ export default function PersonForm({ mode, initialValues = {}, onSubmit, onDelet
               <DateTimePicker
                 value={nextMeetingDate ? new Date(nextMeetingDate) : new Date()}
                 mode="date"
-                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                 minimumDate={new Date()}
                 onChange={(_, date) => {
                   setShowDatePicker(Platform.OS === 'ios');
