@@ -13,8 +13,8 @@ const assetsDir = path.join(__dirname, '..', 'assets');
 function buildIconSvg(size) {
   const cx = size / 2;
   const cy = size / 2;
-  const r = size * 0.288; // ~295 on 1024
-  const sw = size * 0.0098; // ~10px on 1024
+  const r = size * 0.312; // ~320 on 1024
+  const sw = size * 0.014; // ~14px on 1024
 
   // 開始点：上中央 (cx, cy-r)
   const sx = cx;
@@ -25,8 +25,8 @@ function buildIconSvg(size) {
 
   // 矢印先端（終端の接線方向：左中央では接線が上方向→先端は下を向く）
   // 接線ベクトル at angle=180deg → direction is (0, -1) → arrow tip faces down
-  const ah = size * 0.055; // arrowhead height ~56px
-  const ab = size * 0.038; // arrowhead base half ~39px
+  const ah = size * 0.065; // arrowhead height ~67px
+  const ab = size * 0.046; // arrowhead base half ~47px
   // 終端での接線（時計回りなので angle=180deg → tangent = (0, -1)）
   // 矢印先端の頂点・左・右
   const tipX = ex;

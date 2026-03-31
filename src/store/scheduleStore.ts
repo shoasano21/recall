@@ -9,6 +9,7 @@ type ScheduleStore = {
   isLoaded: boolean;
   load: () => Promise<void>;
   add: (schedule: Omit<Schedule, 'id' | 'createdAt'>) => Promise<Schedule>;
+  update: (id: string, patch: Partial<Omit<Schedule, 'id' | 'createdAt'>>) => Promise<void>;
   remove: (id: string) => Promise<void>;
   bulkSet: (schedules: Schedule[]) => Promise<void>;
 };
@@ -37,6 +38,14 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     set({ schedules });
     await persist(schedules);
     return schedule;
+  },
+
+  update: async (id, patch) => {
+    const schedules = get().schedules.map((s) =>
+      s.id === id ? { ...s, ...patch } : s
+    );
+    set({ schedules });
+    await persist(schedules);
   },
 
   remove: async (id) => {

@@ -2,8 +2,9 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const NOTIFY_HOUR_KEY = 'recall_notify_hour';
+const NOTIFY_MINUTE_KEY = 'recall_notify_minute';
 export const DEFAULT_NOTIFY_HOUR = 21;
-export const NOTIFY_HOUR_OPTIONS = [20, 21, 22] as const;
+export const DEFAULT_NOTIFY_MINUTE = 0;
 
 // ─── 通知時刻の保存・取得 ─────────────────────────────────────────────────
 export async function getNotifyHour(): Promise<number> {
@@ -13,6 +14,24 @@ export async function getNotifyHour(): Promise<number> {
 
 export async function setNotifyHour(hour: number): Promise<void> {
   await AsyncStorage.setItem(NOTIFY_HOUR_KEY, String(hour));
+}
+
+export async function getNotifyMinute(): Promise<number> {
+  const raw = await AsyncStorage.getItem(NOTIFY_MINUTE_KEY);
+  return raw ? parseInt(raw, 10) : DEFAULT_NOTIFY_MINUTE;
+}
+
+export async function setNotifyMinute(minute: number): Promise<void> {
+  await AsyncStorage.setItem(NOTIFY_MINUTE_KEY, String(minute));
+}
+
+export async function getNotifyTime(): Promise<{ hour: number; minute: number }> {
+  const [hour, minute] = await Promise.all([getNotifyHour(), getNotifyMinute()]);
+  return { hour, minute };
+}
+
+export async function setNotifyTime(hour: number, minute: number): Promise<void> {
+  await Promise.all([setNotifyHour(hour), setNotifyMinute(minute)]);
 }
 
 // ─── 権限リクエスト ───────────────────────────────────────────────────────
@@ -29,15 +48,12 @@ export async function getNotificationPermissionStatus(): Promise<string> {
 }
 
 // ─── 前日の指定時刻を計算 ────────────────────────────────────────────────
-function getPrevDayTrigger(dateStr: string, hour: number): Date | null {
-  // dateStr は YYYY-MM-DD または ISO datetime
+function getPrevDayTrigger(dateStr: string, hour: number, minute: number): Date | null {
   const target = new Date(dateStr);
   if (isNaN(target.getTime())) return null;
-  // 前日
   const trigger = new Date(target);
   trigger.setDate(trigger.getDate() - 1);
-  trigger.setHours(hour, 0, 0, 0);
-  // 過去なら null
+  trigger.setHours(hour, minute, 0, 0);
   if (trigger.getTime() <= Date.now()) return null;
   return trigger;
 }
@@ -48,8 +64,8 @@ export async function scheduleNextMeetingNotification(
   personName: string,
   dateStr: string
 ): Promise<string | null> {
-  const hour = await getNotifyHour();
-  const triggerDate = getPrevDayTrigger(dateStr, hour);
+  const { hour, minute } = await getNotifyTime();
+  const triggerDate = getPrevDayTrigger(dateStr, hour, minute);
   if (!triggerDate) return null;
 
   const id = await Notifications.scheduleNotificationAsync({
@@ -69,8 +85,8 @@ export async function scheduleAppointmentNotification(
   personName: string,
   dateStr: string
 ): Promise<string | null> {
-  const hour = await getNotifyHour();
-  const triggerDate = getPrevDayTrigger(dateStr, hour);
+  const { hour, minute } = await getNotifyTime();
+  const triggerDate = getPrevDayTrigger(dateStr, hour, minute);
   if (!triggerDate) return null;
 
   const id = await Notifications.scheduleNotificationAsync({

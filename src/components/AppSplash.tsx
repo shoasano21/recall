@@ -1,24 +1,27 @@
-import { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { useEffect, useLayoutEffect, useRef } from 'react';
+import { Text, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontSize, Spacing } from '../constants/theme';
 
 type Props = {
+  onReady: () => void; // マウント直後にネイティブスプラッシュを隠す
   onFinish: () => void;
 };
 
-export default function AppSplash({ onFinish }: Props) {
-  const opacity = useRef(new Animated.Value(0)).current;
+export default function AppSplash({ onReady, onFinish }: Props) {
+  // opacity 1 から開始 — ネイティブスプラッシュ非表示前に確実に見えている状態にする
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  // useLayoutEffect はペイント前に同期実行される
+  // ここで hideAsync() を呼ぶことでネイティブ→カスタムが途切れなくつながる
+  useLayoutEffect(() => {
+    onReady();
+  }, []);
 
   useEffect(() => {
-    // フェードイン → 1.5秒待機 → フェードアウト
+    // 1.8秒待機 → フェードアウト
     Animated.sequence([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.delay(1400),
+      Animated.delay(1800),
       Animated.timing(opacity, {
         toValue: 0,
         duration: 300,
@@ -35,10 +38,10 @@ export default function AppSplash({ onFinish }: Props) {
         end={{ x: 0, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <View style={styles.content}>
+      <Animated.View style={styles.content}>
         <Text style={styles.title}>Recall</Text>
         <Text style={styles.tagline}>大切な人のことを、もっと覚えていよう</Text>
-      </View>
+      </Animated.View>
     </Animated.View>
   );
 }

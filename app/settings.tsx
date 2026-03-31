@@ -6,42 +6,63 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { usePersonStore } from '../src/store/personStore';
 import { useLogStore } from '../src/store/logStore';
 import { exportJson, exportCsv, importJson } from '../src/utils/backup';
 import {
-  getNotifyHour,
-  setNotifyHour,
-  NOTIFY_HOUR_OPTIONS,
+  getNotifyTime,
+  setNotifyTime,
+  DEFAULT_NOTIFY_HOUR,
+  DEFAULT_NOTIFY_MINUTE,
   getNotificationPermissionStatus,
 } from '../src/utils/notifications';
 import { Colors, Spacing, FontSize, BorderRadius } from '../src/constants/theme';
 
 type LoadingKey = 'json-export' | 'csv-export' | 'import' | null;
 
+function buildTimeDate(hour: number, minute: number): Date {
+  const d = new Date();
+  d.setHours(hour, minute, 0, 0);
+  return d;
+}
+
+function formatTime(hour: number, minute: number): string {
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
 export default function SettingsScreen() {
   const [loading, setLoading] = useState<LoadingKey>(null);
-  const [notifyHour, setNotifyHourState] = useState<number>(21);
+  const [notifyHour, setNotifyHourState] = useState<number>(DEFAULT_NOTIFY_HOUR);
+  const [notifyMinute, setNotifyMinuteState] = useState<number>(DEFAULT_NOTIFY_MINUTE);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<string>('');
 
   useEffect(() => {
     (async () => {
-      const [hour, status] = await Promise.all([
-        getNotifyHour(),
+      const [{ hour, minute }, status] = await Promise.all([
+        getNotifyTime(),
         getNotificationPermissionStatus(),
       ]);
       setNotifyHourState(hour);
+      setNotifyMinuteState(minute);
       setPermissionStatus(status);
     })();
   }, []);
 
-  const handleChangeNotifyHour = async (hour: number) => {
-    setNotifyHourState(hour);
-    await setNotifyHour(hour);
+  const handleTimeChange = async (_: DateTimePickerEvent, selected?: Date) => {
+    if (Platform.OS !== 'ios') setShowTimePicker(false);
+    if (!selected) return;
+    const h = selected.getHours();
+    const m = selected.getMinutes();
+    setNotifyHourState(h);
+    setNotifyMinuteState(m);
+    await setNotifyTime(h, m);
   };
 
   const handleJsonExport = async () => {
@@ -123,7 +144,10 @@ export default function SettingsScreen() {
         </View>
       )}
       <View style={styles.card}>
-        <View style={styles.row}>
+        <Pressable
+          style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+          onPress={() => setShowTimePicker(true)}
+        >
           <View style={styles.rowIcon}>
             <Ionicons name="moon-outline" size={22} color={Colors.accent} />
           </View>
@@ -131,20 +155,17 @@ export default function SettingsScreen() {
             <Text style={styles.rowLabel}>前日通知の時刻</Text>
             <Text style={styles.rowDescription}>次に会う日・予定の前日に通知を送る時刻</Text>
           </View>
-        </View>
-        <View style={styles.hourSelector}>
-          {NOTIFY_HOUR_OPTIONS.map((h) => (
-            <Pressable
-              key={h}
-              style={[styles.hourChip, notifyHour === h && styles.hourChipSelected]}
-              onPress={() => handleChangeNotifyHour(h)}
-            >
-              <Text style={[styles.hourChipText, notifyHour === h && styles.hourChipTextSelected]}>
-                {h}時
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+          <Text style={styles.timeValue}>{formatTime(notifyHour, notifyMinute)}</Text>
+          <Ionicons name="chevron-forward" size={16} color={Colors.border} />
+        </Pressable>
+        {showTimePicker && (
+          <DateTimePicker
+            value={buildTimeDate(notifyHour, notifyMinute)}
+            mode="time"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={handleTimeChange}
+          />
+        )}
       </View>
 
       {/* バックアップ */}
@@ -152,8 +173,8 @@ export default function SettingsScreen() {
       <View style={styles.card}>
         <SettingsRow
           icon="download-outline"
-          label="JSONでエクスポート"
-          description="全データをJSONファイルで保存・共有"
+          label="データをバックアップする"
+          description="全データをファイルに保存してAirDropやメールで共有"
           onPress={handleJsonExport}
           loading={loading === 'json-export'}
           disabled={loading !== null}
@@ -161,8 +182,8 @@ export default function SettingsScreen() {
         <View style={styles.divider} />
         <SettingsRow
           icon="document-text-outline"
-          label="CSVでエクスポート"
-          description="人物データをCSVファイルで保存・共有"
+          label="Excelで開けるファイルで保存"
+          description="人物データをスプレッドシートで確認・編集"
           onPress={handleCsvExport}
           loading={loading === 'csv-export'}
           disabled={loading !== null}
@@ -170,8 +191,8 @@ export default function SettingsScreen() {
         <View style={styles.divider} />
         <SettingsRow
           icon="cloud-upload-outline"
-          label="JSONからインポート"
-          description="バックアップファイルからデータを復元"
+          label="バックアップから復元する"
+          description="以前保存したバックアップファイルからデータを復元"
           onPress={handleImport}
           loading={loading === 'import'}
           disabled={loading !== null}
@@ -294,30 +315,10 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.textSecondary,
   },
-  hourSelector: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.md,
-  },
-  hourChip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    backgroundColor: Colors.background,
-  },
-  hourChipSelected: {
-    borderColor: Colors.accent,
-    backgroundColor: Colors.tagBackground,
-  },
-  hourChipText: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-  },
-  hourChipTextSelected: {
+  timeValue: {
+    fontSize: FontSize.md,
     color: Colors.accent,
+    fontWeight: '600',
+    marginRight: Spacing.xs,
   },
 });

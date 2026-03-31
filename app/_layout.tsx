@@ -28,10 +28,7 @@ export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true);
   const [fontsLoaded] = useFonts({ Raleway_700Bold });
 
-  useEffect(() => {
-    if (!fontsLoaded) return;
-    SplashScreen.hideAsync();
-  }, [fontsLoaded]);
+  // hideAsync は AppSplash の onReady（useLayoutEffect）で呼ぶため、ここでは不要
 
   useEffect(() => {
     (async () => {
@@ -68,9 +65,17 @@ export default function RootLayout() {
         <Stack.Screen name="person/[id]/log/new" options={{ title: '会話を追加', presentation: 'modal' }} />
         <Stack.Screen name="person/[id]/log/[logId]" options={{ title: '会話を編集', presentation: 'modal' }} />
         <Stack.Screen name="settings" options={{ title: '設定' }} />
+        <Stack.Screen name="schedule" options={{ title: 'カレンダー' }} />
         <Stack.Screen name="schedule/new" options={{ title: '予定を追加', presentation: 'modal' }} />
+        <Stack.Screen name="schedule/[id]/index" options={{ title: '予定の詳細' }} />
+        <Stack.Screen name="schedule/[id]/edit" options={{ title: '予定を編集', presentation: 'modal' }} />
       </Stack>
-      {showSplash && <AppSplash onFinish={() => setShowSplash(false)} />}
+      {showSplash && (
+        <AppSplash
+          onReady={() => SplashScreen.hideAsync()}
+          onFinish={() => setShowSplash(false)}
+        />
+      )}
     </>
   );
 }
