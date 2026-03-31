@@ -4,6 +4,10 @@ import { usePersonStore } from '../../../src/store/personStore';
 import { useLogStore } from '../../../src/store/logStore';
 import PersonForm from '../../../src/components/PersonForm';
 import { Colors, FontSize } from '../../../src/constants/theme';
+import {
+  scheduleNextMeetingNotification,
+  cancelNotification,
+} from '../../../src/utils/notifications';
 
 export default function EditPersonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,10 +27,26 @@ export default function EditPersonScreen() {
       mode="edit"
       initialValues={person}
       onSubmit={async (data) => {
-        await usePersonStore.getState().update(id, data);
+        // 既存の通知をキャンセル
+        if (person.nextMeetingNotificationId) {
+          await cancelNotification(person.nextMeetingNotificationId);
+        }
+        // 新しい次に会う日があれば通知をスケジュール
+        let notificationId: string | undefined;
+        if (data.nextMeetingDate) {
+          const nid = await scheduleNextMeetingNotification(id, data.name, data.nextMeetingDate);
+          notificationId = nid ?? undefined;
+        }
+        await usePersonStore.getState().update(id, {
+          ...data,
+          nextMeetingNotificationId: notificationId,
+        });
         router.back();
       }}
       onDelete={async () => {
+        if (person.nextMeetingNotificationId) {
+          await cancelNotification(person.nextMeetingNotificationId);
+        }
         await usePersonStore.getState().remove(id);
         await useLogStore.getState().removeByPersonId(id);
         router.replace('/');

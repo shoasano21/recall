@@ -18,7 +18,7 @@ export default function AppSplash({ onFinish }: Props) {
         duration: 300,
         useNativeDriver: true,
       }),
-      Animated.delay(1200),
+      Animated.delay(1400),
       Animated.timing(opacity, {
         toValue: 0,
         duration: 300,
@@ -36,7 +36,7 @@ export default function AppSplash({ onFinish }: Props) {
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.content}>
-        <Text style={styles.title}>Karte</Text>
+        <Text style={styles.title}>Recall</Text>
         <Text style={styles.tagline}>大切な人のことを、もっと覚えていよう</Text>
       </View>
     </Animated.View>
@@ -56,9 +56,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 64,
-    fontWeight: '700',
+    fontFamily: 'PlayfairDisplay_700Bold',
     color: '#FFFFFF',
-    letterSpacing: 4,
+    letterSpacing: 2,
   },
   tagline: {
     fontSize: FontSize.sm,

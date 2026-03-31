@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useState, useMemo } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { Person } from '../types';
 import { Colors, Spacing, FontSize, BorderRadius } from '../constants/theme';
@@ -37,6 +38,8 @@ export default function PersonForm({ mode, initialValues = {}, onSubmit, onDelet
   const [note, setNote] = useState(initialValues.note ?? '');
   const [tags, setTags] = useState<string[]>(initialValues.tags ?? []);
   const [photoUri, setPhotoUri] = useState<string | undefined>(initialValues.photoUri);
+  const [nextMeetingDate, setNextMeetingDate] = useState<string | undefined>(initialValues.nextMeetingDate);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const allPersons = usePersonStore((s) => s.persons);
   const existingTags = useMemo(() => {
@@ -91,6 +94,7 @@ export default function PersonForm({ mode, initialValues = {}, onSubmit, onDelet
         note: note.trim() || undefined,
         tags,
         photoUri,
+        nextMeetingDate,
       });
     } finally {
       setIsSubmitting(false);
@@ -195,6 +199,44 @@ export default function PersonForm({ mode, initialValues = {}, onSubmit, onDelet
               onChange={setTags}
               suggestions={existingTags}
             />
+          </View>
+        </View>
+
+        {/* 次に会う日 */}
+        <Text style={styles.sectionTitle}>リマインダー</Text>
+        <View style={styles.card}>
+          <View style={styles.fieldRow}>
+            <Text style={styles.label}>次に会う日</Text>
+            <Pressable
+              style={styles.dateRow}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={nextMeetingDate ? styles.dateText : styles.datePlaceholder}>
+                {nextMeetingDate
+                  ? new Date(nextMeetingDate).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })
+                  : '日付を選択'}
+              </Text>
+              <Ionicons name="calendar-outline" size={18} color={Colors.accent} />
+            </Pressable>
+            {nextMeetingDate && (
+              <Pressable onPress={() => setNextMeetingDate(undefined)} hitSlop={8} style={styles.clearDate}>
+                <Text style={styles.clearDateText}>クリア</Text>
+              </Pressable>
+            )}
+            {showDatePicker && (
+              <DateTimePicker
+                value={nextMeetingDate ? new Date(nextMeetingDate) : new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                minimumDate={new Date()}
+                onChange={(_, date) => {
+                  setShowDatePicker(Platform.OS === 'ios');
+                  if (date) {
+                    setNextMeetingDate(date.toISOString().slice(0, 10));
+                  }
+                }}
+              />
+            )}
           </View>
         </View>
 
@@ -360,6 +402,29 @@ const styles = StyleSheet.create({
   },
   removePhotoText: {
     fontSize: FontSize.sm,
+    color: Colors.danger,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.xs,
+    borderBottomWidth: 1.5,
+    borderBottomColor: Colors.border,
+  },
+  dateText: {
+    fontSize: FontSize.md,
+    color: Colors.textPrimary,
+  },
+  datePlaceholder: {
+    fontSize: FontSize.md,
+    color: Colors.textSecondary,
+  },
+  clearDate: {
+    marginTop: Spacing.xs,
+  },
+  clearDateText: {
+    fontSize: FontSize.xs,
     color: Colors.danger,
   },
 

@@ -69,6 +69,21 @@ export default function PersonCard({ person, lastMetDate, onPress }: Props) {
           <Text style={[styles.lastMet, hasLastMet && styles.lastMetActive]}>
             {formatLastMet(lastMetDate)}
           </Text>
+
+          {person.tags.length > 0 && (
+            <View style={styles.tagRow}>
+              {person.tags.slice(0, 3).map((tag) => (
+                <View key={tag} style={styles.tagChip}>
+                  <Text style={styles.tagChipText}>{tag}</Text>
+                </View>
+              ))}
+              {person.tags.length > 3 && (
+                <View style={styles.tagChip}>
+                  <Text style={styles.tagChipText}>+{person.tags.length - 3}</Text>
+                </View>
+              )}
+            </View>
+          )}
         </View>
 
         {/* Chevron */}
@@ -138,6 +153,23 @@ const styles = StyleSheet.create({
   },
   lastMetActive: {
     color: Colors.accent,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    marginTop: 2,
+  },
+  tagChip: {
+    backgroundColor: Colors.tagBackground,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  tagChipText: {
+    fontSize: FontSize.xs - 1,
+    color: Colors.accent,
+    fontWeight: '600',
   },
   chevron: {
     fontSize: 22,

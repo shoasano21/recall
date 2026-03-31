@@ -9,16 +9,40 @@ import {
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePersonStore } from '../src/store/personStore';
 import { useLogStore } from '../src/store/logStore';
 import { exportJson, exportCsv, importJson } from '../src/utils/backup';
+import {
+  getNotifyHour,
+  setNotifyHour,
+  NOTIFY_HOUR_OPTIONS,
+  getNotificationPermissionStatus,
+} from '../src/utils/notifications';
 import { Colors, Spacing, FontSize, BorderRadius } from '../src/constants/theme';
 
 type LoadingKey = 'json-export' | 'csv-export' | 'import' | null;
 
 export default function SettingsScreen() {
   const [loading, setLoading] = useState<LoadingKey>(null);
+  const [notifyHour, setNotifyHourState] = useState<number>(21);
+  const [permissionStatus, setPermissionStatus] = useState<string>('');
+
+  useEffect(() => {
+    (async () => {
+      const [hour, status] = await Promise.all([
+        getNotifyHour(),
+        getNotificationPermissionStatus(),
+      ]);
+      setNotifyHourState(hour);
+      setPermissionStatus(status);
+    })();
+  }, []);
+
+  const handleChangeNotifyHour = async (hour: number) => {
+    setNotifyHourState(hour);
+    await setNotifyHour(hour);
+  };
 
   const handleJsonExport = async () => {
     setLoading('json-export');
@@ -27,7 +51,8 @@ export default function SettingsScreen() {
       const logs = useLogStore.getState().logs;
       await exportJson(persons, logs);
     } catch (e: any) {
-      Alert.alert('エクスポートに失敗しました', e?.message ?? '');
+      console.error('[settings] json export error:', e);
+      Alert.alert('エクスポートに失敗しました', e?.message ?? String(e));
     } finally {
       setLoading(null);
     }
@@ -39,7 +64,8 @@ export default function SettingsScreen() {
       const persons = usePersonStore.getState().persons;
       await exportCsv(persons);
     } catch (e: any) {
-      Alert.alert('エクスポートに失敗しました', e?.message ?? '');
+      console.error('[settings] csv export error:', e);
+      Alert.alert('エクスポートに失敗しました', e?.message ?? String(e));
     } finally {
       setLoading(null);
     }
@@ -59,17 +85,12 @@ export default function SettingsScreen() {
               const persons = usePersonStore.getState().persons;
               const logs = useLogStore.getState().logs;
               const result = await importJson(persons, logs);
-              if (!result) return; // キャンセル
-
+              if (!result) return;
               const { newPersons, newLogs } = result;
-              // ストアに一括追加（直接stateを更新してpersist）
               if (newPersons.length > 0 || newLogs.length > 0) {
-                const nextPersons = [...persons, ...newPersons];
-                const nextLogs = [...logs, ...newLogs];
-                await usePersonStore.getState().bulkSet(nextPersons);
-                await useLogStore.getState().bulkSet(nextLogs);
+                await usePersonStore.getState().bulkSet([...persons, ...newPersons]);
+                await useLogStore.getState().bulkSet([...logs, ...newLogs]);
               }
-
               Alert.alert(
                 'インポート完了',
                 newPersons.length > 0
@@ -91,6 +112,42 @@ export default function SettingsScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: '設定' }} />
 
+      {/* 通知設定 */}
+      <Text style={styles.sectionTitle}>通知</Text>
+      {permissionStatus !== 'granted' && (
+        <View style={styles.warningCard}>
+          <Ionicons name="notifications-off-outline" size={18} color={Colors.danger} />
+          <Text style={styles.warningText}>
+            通知が無効です。設定アプリから通知を有効にしてください。
+          </Text>
+        </View>
+      )}
+      <View style={styles.card}>
+        <View style={styles.row}>
+          <View style={styles.rowIcon}>
+            <Ionicons name="moon-outline" size={22} color={Colors.accent} />
+          </View>
+          <View style={styles.rowText}>
+            <Text style={styles.rowLabel}>前日通知の時刻</Text>
+            <Text style={styles.rowDescription}>次に会う日・予定の前日に通知を送る時刻</Text>
+          </View>
+        </View>
+        <View style={styles.hourSelector}>
+          {NOTIFY_HOUR_OPTIONS.map((h) => (
+            <Pressable
+              key={h}
+              style={[styles.hourChip, notifyHour === h && styles.hourChipSelected]}
+              onPress={() => handleChangeNotifyHour(h)}
+            >
+              <Text style={[styles.hourChipText, notifyHour === h && styles.hourChipTextSelected]}>
+                {h}時
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {/* バックアップ */}
       <Text style={styles.sectionTitle}>バックアップ・復元</Text>
       <View style={styles.card}>
         <SettingsRow
@@ -175,6 +232,23 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
     marginLeft: Spacing.xs,
   },
+  warningCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    backgroundColor: '#FFF0F0',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.danger,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: FontSize.xs,
+    color: Colors.danger,
+    lineHeight: 18,
+  },
   card: {
     backgroundColor: Colors.white,
     borderRadius: BorderRadius.md,
@@ -219,5 +293,31 @@ const styles = StyleSheet.create({
   rowDescription: {
     fontSize: FontSize.xs,
     color: Colors.textSecondary,
+  },
+  hourSelector: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
+  },
+  hourChip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.background,
+  },
+  hourChipSelected: {
+    borderColor: Colors.accent,
+    backgroundColor: Colors.tagBackground,
+  },
+  hourChipText: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  hourChipTextSelected: {
+    color: Colors.accent,
   },
 });

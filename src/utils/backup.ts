@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { Person, ConversationLog } from '../types';
@@ -12,7 +12,6 @@ export type BackupData = {
   logs: ConversationLog[];
 };
 
-// ─── 日付文字列 YYYYMMDD ────────────────────────────────────────────────────
 function dateStamp(): string {
   const d = new Date();
   const y = d.getFullYear();
@@ -23,24 +22,43 @@ function dateStamp(): string {
 
 // ─── JSON エクスポート ───────────────────────────────────────────────────────
 export async function exportJson(persons: Person[], logs: ConversationLog[]): Promise<void> {
+  const isAvailable = await Sharing.isAvailableAsync();
+  if (!isAvailable) {
+    throw new Error('この端末では共有機能が利用できません');
+  }
+  if (!FileSystem.cacheDirectory) {
+    throw new Error('キャッシュディレクトリが取得できませんでした');
+  }
+
   const payload: BackupData = {
     version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     persons,
     logs,
   };
-  const fileName = `karte_backup_${dateStamp()}.json`;
-  const path = `${FileSystem.cacheDirectory}${fileName}`;
-  await FileSystem.writeAsStringAsync(path, JSON.stringify(payload, null, 2), {
-    encoding: FileSystem.EncodingType.UTF8,
-  });
-  await Sharing.shareAsync(path, { mimeType: 'application/json', dialogTitle: 'バックアップを共有' });
+  const json = JSON.stringify(payload, null, 2);
+  const path = `${FileSystem.cacheDirectory}karte_backup_${dateStamp()}.json`;
+
+  try {
+    await FileSystem.writeAsStringAsync(path, json, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+  } catch (e) {
+    console.error('[backup] write error:', e);
+    throw e;
+  }
+
+  try {
+    await Sharing.shareAsync(path, { mimeType: 'application/json', dialogTitle: 'バックアップを共有' });
+  } catch (e) {
+    console.error('[backup] share error:', e);
+    throw e;
+  }
 }
 
 // ─── CSV エクスポート ────────────────────────────────────────────────────────
 function escapeCsv(value: string | undefined): string {
   if (!value) return '';
-  // ダブルクォートをエスケープし、カンマ・改行を含む場合はクォートで囲む
   const escaped = value.replace(/"/g, '""');
   return /[,"\n]/.test(escaped) ? `"${escaped}"` : escaped;
 }
@@ -59,10 +77,8 @@ export async function exportCsv(persons: Person[]): Promise<void> {
   ]);
   const csv = [header.join(','), ...rows.map((r) => r.join(','))].join('\n');
   // BOM付きUTF-8（Excelで文字化けしないように）
-  const bom = '\uFEFF';
-  const fileName = `karte_persons_${dateStamp()}.csv`;
-  const path = `${FileSystem.cacheDirectory}${fileName}`;
-  await FileSystem.writeAsStringAsync(path, bom + csv, {
+  const path = `${FileSystem.cacheDirectory}karte_persons_${dateStamp()}.csv`;
+  await FileSystem.writeAsStringAsync(path, '\uFEFF' + csv, {
     encoding: FileSystem.EncodingType.UTF8,
   });
   await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: '人物データを共有' });

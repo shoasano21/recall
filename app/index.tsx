@@ -10,6 +10,7 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useMemo } from 'react';
+import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
 import { usePersonStore } from '../src/store/personStore';
 import { useLogStore } from '../src/store/logStore';
 import PersonCard from '../src/components/PersonCard';
@@ -17,6 +18,7 @@ import { Colors, Spacing, FontSize, BorderRadius } from '../src/constants/theme'
 
 export default function HomeScreen() {
   const router = useRouter();
+  useFonts({ PlayfairDisplay_700Bold });
   const persons = usePersonStore((s) => s.persons);
   const isLoaded = usePersonStore((s) => s.isLoaded);
   const logs = useLogStore((s) => s.logs);
@@ -72,20 +74,26 @@ export default function HomeScreen() {
       {/* ヘッダーに追加ボタン */}
       <Stack.Screen
         options={{
-          title: 'Karte',
+          headerTitle: () => (
+            <Text style={styles.headerTitle}>Recall</Text>
+          ),
           headerRight: () => (
             <View style={styles.headerButtons}>
               <Pressable
                 onPress={() => router.push('/settings')}
-                hitSlop={12}
-                style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
+                style={({ pressed }) => [styles.headerButton, { opacity: pressed ? 0.5 : 1 }]}
               >
-                <Ionicons name="settings-outline" size={22} color={Colors.textSecondary} />
+                <Ionicons name="settings-outline" size={24} color={Colors.textSecondary} />
+              </Pressable>
+              <Pressable
+                onPress={() => router.push('/schedule/new')}
+                style={({ pressed }) => [styles.headerButton, { opacity: pressed ? 0.5 : 1 }]}
+              >
+                <Ionicons name="calendar-outline" size={24} color={Colors.textSecondary} />
               </Pressable>
               <Pressable
                 onPress={() => router.push('/person/new')}
-                hitSlop={12}
-                style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
+                style={({ pressed }) => [styles.headerButton, { opacity: pressed ? 0.5 : 1 }]}
               >
                 <Ionicons name="add" size={28} color={Colors.accent} />
               </Pressable>
@@ -96,7 +104,7 @@ export default function HomeScreen() {
 
       {/* 検索バー */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={16} color={Colors.textSecondary} style={styles.searchIcon} />
+        <Ionicons name="search" size={18} color={Colors.textSecondary} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="名前・所属で検索"
@@ -196,10 +204,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  headerTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 30,
+    color: Colors.textPrimary,
+    letterSpacing: 1.5,
+  },
   headerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
+  },
+  headerButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -209,8 +229,8 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.md,
     marginTop: Spacing.md,
     marginBottom: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    height: 44,
+    paddingHorizontal: Spacing.md + 4,
+    height: 52,
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -219,7 +239,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: FontSize.md,
+    fontSize: FontSize.lg,
     color: Colors.textPrimary,
   },
   // タグフィルター
@@ -232,11 +252,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    gap: Spacing.xs,
+    gap: Spacing.sm,
   },
   filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     borderRadius: 8,
     backgroundColor: Colors.tagBackground,
     borderWidth: 1.5,
@@ -246,7 +266,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accent,
   },
   filterChipText: {
-    fontSize: 13,
+    fontSize: FontSize.sm,
     color: Colors.accent,
     fontWeight: '600',
   },
