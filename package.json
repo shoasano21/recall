@@ -43,5 +43,17 @@
     "sharp": "^0.34.5",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "expo": {
+    "install": {
+      "exclude": [
+        "expo-font",
+        "expo-notifications",
+        "expo-splash-screen",
+        "react",
+        "react-dom",
+        "react-native-svg"
+      ]
+    }
+  }
 }

@@ -16,6 +16,9 @@
     "production": {
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_NO_DOCTOR": "1"
       }
     }
   },
