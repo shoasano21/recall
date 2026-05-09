@@ -54,7 +54,8 @@ workflows:
           keychain add-certificates
       - name: Set up code signing in Xcode project
         script: |
-          xcode-project use-profiles
+          xcode-project use-profiles \
+            --xcode-project-patterns "ios/*.xcodeproj"
       - name: Set build number from TestFlight
         script: |
           LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" 2>/dev/null || echo 0)
