@@ -43,22 +43,12 @@ workflows:
       - name: Generate private key for certificate
         script: |
           openssl genrsa -out /tmp/cert_key.pem 2048
-      - name: Create new iOS distribution certificate
+      - name: Fetch signing files (creates cert + profile with our key)
         script: |
-          app-store-connect certificates create \
-            --type IOS_DISTRIBUTION \
-            --certificate-key=@file:/tmp/cert_key.pem \
-            --save
-      - name: Create or fetch provisioning profile
-        script: |
-          app-store-connect profiles create \
-            --bundle-id "$BUNDLE_ID" \
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --certificate-key=@file:/tmp/cert_key.pem \
-            --save \
-            || app-store-connect fetch-signing-files "$BUNDLE_ID" \
-              --type IOS_APP_STORE \
-              --certificate-key=@file:/tmp/cert_key.pem
+            --create
       - name: Add certificates to keychain
         script: |
           keychain add-certificates
