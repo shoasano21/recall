@@ -6,9 +6,6 @@ workflows:
     integrations:
       app_store_connect: codemagic
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.shoas.recall
       vars:
         XCODE_WORKSPACE: "Recall.xcworkspace"
         XCODE_SCHEME: "Recall"
@@ -32,14 +29,25 @@ workflows:
       - name: Pod install
         script: |
           cd ios && pod install
-      - name: Set build number from App Store Connect
+      - name: Initialize keychain
         script: |
-          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APP_ID" || echo 0)
-          cd ios
-          agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
-      - name: Set up code signing
+          keychain initialize
+      - name: Fetch signing files (auto-create if missing)
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+      - name: Add certificates to keychain
+        script: |
+          keychain add-certificates
+      - name: Set up code signing in Xcode project
         script: |
           xcode-project use-profiles
+      - name: Set build number from TestFlight
+        script: |
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" 2>/dev/null || echo 0)
+          NEW_BUILD_NUMBER=$(($LATEST_BUILD_NUMBER + 1))
+          cd ios && agvtool new-version -all $NEW_BUILD_NUMBER
       - name: Build ipa
         script: |
           xcode-project build-ipa \
