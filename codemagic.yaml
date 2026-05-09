@@ -34,23 +34,13 @@ workflows:
           keychain initialize
       - name: Revoke all existing iOS distribution certificates (clean slate)
         script: |
-          set -x
           echo "=== Listing existing distribution certificates ==="
           app-store-connect certificates list --type IOS_DISTRIBUTION --json > /tmp/certs.json
           echo "--- Raw JSON ---"
           cat /tmp/certs.json
           echo "--- Extracted cert IDs ---"
-          CERT_IDS=$(python3 <<'PYEOF'
-import json
-with open('/tmp/certs.json') as f:
-    data = json.load(f)
-items = data if isinstance(data, list) else data.get('data', [])
-for c in items:
-    cert_id = c.get('id') or c.get('attributes', {}).get('id')
-    if cert_id:
-        print(cert_id)
-PYEOF
-)
+          # jq で配列 / {data:[...]} の両方の形式に対応
+          CERT_IDS=$(jq -r 'if type == "array" then .[].id else .data[].id end' /tmp/certs.json 2>/dev/null || echo "")
           echo "Cert IDs found: '$CERT_IDS'"
           for cert_id in $CERT_IDS; do
             echo "Revoking certificate: $cert_id"
