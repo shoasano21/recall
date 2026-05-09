@@ -55,10 +55,17 @@ workflows:
       - name: Set up code signing in Xcode project
         script: |
           cd ios && xcode-project use-profiles --warn-only
-      - name: Set build number from TestFlight
+      - name: Set build number (max of TestFlight and App Store +1)
         script: |
-          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" 2>/dev/null || echo 0)
-          NEW_BUILD_NUMBER=$(($LATEST_BUILD_NUMBER + 1))
+          TF_BUILD=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" 2>/dev/null || echo 0)
+          AS_BUILD=$(app-store-connect get-latest-app-store-build-number "$BUNDLE_ID" 2>/dev/null || echo 0)
+          if [ "$TF_BUILD" -gt "$AS_BUILD" ]; then
+            LATEST=$TF_BUILD
+          else
+            LATEST=$AS_BUILD
+          fi
+          NEW_BUILD_NUMBER=$((LATEST + 1))
+          echo "TestFlight latest: $TF_BUILD, App Store latest: $AS_BUILD, using new build number: $NEW_BUILD_NUMBER"
           cd ios && agvtool new-version -all $NEW_BUILD_NUMBER
       - name: Build ipa
         script: |
