@@ -27,8 +27,13 @@ export const useLogStore = create<LogStore>((set, get) => ({
 
   load: async () => {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    const logs: ConversationLog[] = raw ? JSON.parse(raw) : [];
-    set({ logs, isLoaded: true });
+    const parsed: ConversationLog[] = raw ? JSON.parse(raw) : [];
+    // 旧シード佐藤美咲（personId: seed-2）に紐づくログを削除
+    const migrated = parsed.filter((l) => l.personId !== 'seed-2');
+    if (migrated.length !== parsed.length) {
+      await persist(migrated);
+    }
+    set({ logs: migrated, isLoaded: true });
   },
 
   add: async (data) => {
@@ -90,14 +95,6 @@ export const useLogStore = create<LogStore>((set, get) => ({
         isOnline: false,
         location: '新宿 会議室B',
         content: '初回顔合わせ。担当プロジェクトの概要を説明してもらった。趣味がゴルフと知り、共通の話題ができた。',
-        createdAt: now,
-      },
-      {
-        id: 'log-seed-3',
-        personId: 'seed-2',
-        date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        isOnline: true,
-        content: '就活の相談に乗った。Web系企業を中心に20社ほど応募予定とのこと。ポートフォリオのフィードバックを来週までに送る。',
         createdAt: now,
       },
       {

@@ -27,12 +27,18 @@ export const usePersonStore = create<PersonStore>((set, get) => ({
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     const parsed: Array<Omit<Person, 'tags'> & { tags?: string[] }> = raw ? JSON.parse(raw) : [];
     // tags フィールドが存在しない古いデータをマイグレーション
-    const persons: Person[] = parsed.map((p) => ({
-      ...p,
-      tags: p.tags ?? [],
-      highSchool: p.highSchool ?? undefined,
-    }));
-    set({ persons, isLoaded: true });
+    // 旧シードの佐藤美咲（seed-2）を削除
+    const migrated: Person[] = parsed
+      .filter((p) => p.id !== 'seed-2')
+      .map((p) => ({
+        ...p,
+        tags: p.tags ?? [],
+        highSchool: p.highSchool ?? undefined,
+      }));
+    if (migrated.length !== parsed.length) {
+      await persist(migrated);
+    }
+    set({ persons: migrated, isLoaded: true });
   },
 
   add: async (data) => {
@@ -72,10 +78,9 @@ export const usePersonStore = create<PersonStore>((set, get) => ({
     const persons = get().persons;
 
     // シードIDのデータが存在するが tags が空の場合 → タグだけ補完して終了
-    const seedIds = ['seed-1', 'seed-2', 'seed-3', 'seed-4'];
+    const seedIds = ['seed-1', 'seed-3', 'seed-4'];
     const seedTagMap: Record<string, string[]> = {
       'seed-1': ['取引先', 'ビジネス'],
-      'seed-2': ['同期', '大学'],
       'seed-3': ['ビジネス', '上司'],
       'seed-4': ['友人', 'プライベート'],
     };
@@ -105,18 +110,6 @@ export const usePersonStore = create<PersonStore>((set, get) => ({
         hometown: '大阪府',
         note: '**得意分野**: マーケティング戦略\n- 月次MTGは第2水曜日\n- コーヒーはブラック派',
         tags: ['取引先', 'ビジネス'],
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: 'seed-2',
-        name: '佐藤 美咲',
-        organization: '〇〇大学 情報学部',
-        relationship: '同期',
-        hobby: '料理、旅行、写真',
-        hometown: '東京都',
-        note: '就活中。Web系志望。\nポートフォリオ作成を手伝う約束をした。',
-        tags: ['同期', '大学'],
         createdAt: now,
         updatedAt: now,
       },

@@ -97,3 +97,19 @@ All colors, spacing, font sizes, and border radii are defined here. Never hardco
 - Version: 1.0.0 | Build: 1
 - Privacy policy: `docs/privacy-policy.md`
 - App Store description: `docs/app-store-description.md`
+
+## Code Review Rules
+
+**IMPORTANT: After every code change (Edit or Write tool use), automatically run a code review on the modified file(s) by checking the rules below. Do not wait to be asked — perform the review immediately after each change and report findings before moving on.**
+
+When reviewing code changes (e.g. via `git diff`), always check the following:
+
+1. **Type safety** — Verify TypeScript types are correct; flag any `any`, missing null checks, or type mismatches against `src/types/index.ts`
+2. **Security** — Check for injection risks, improper AsyncStorage key usage, or unsafe data handling
+3. **Boundary conditions** — Confirm edge cases are handled: empty arrays, undefined optional fields (`nextMeetingDate`, `notificationId`), and empty tag lists
+4. **Store usage** — Ensure store actions are called via `useXxxStore.getState().method()` inside `useEffect`, not as hooks directly
+5. **Theme compliance** — Confirm no hardcoded colors, spacing, or font sizes; all values must come from `src/constants/theme.ts`
+6. **Notification lifecycle** — When adding/removing `nextMeetingDate` or `Schedule`, verify `scheduleNextMeetingNotification` / `cancelNotification` are called correctly
+7. **Expo compatibility** — Flag any packages installed without `npx expo install`; note `expo-file-system/legacy` is required (not `expo-file-system`)
+
+Report issues with file path and line number. If no issues are found, confirm explicitly.

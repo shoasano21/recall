@@ -50,7 +50,7 @@ export default function PersonDetailScreen() {
               onPress={() => router.push(`/person/${id}/edit`)}
               style={({ pressed }) => ({ padding: 8, opacity: pressed ? 0.5 : 1 })}
             >
-              <Ionicons name="pencil-outline" size={22} color={Colors.accent} />
+              <Ionicons name="pencil-outline" size={24} color={Colors.accent} />
             </Pressable>
           ),
         }}

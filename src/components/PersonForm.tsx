@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useState, useMemo } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system/legacy';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { Person, ConversationLog } from '../types';
@@ -22,6 +23,21 @@ import TagInput from './TagInput';
 
 type FormData = Omit<Person, 'id' | 'createdAt' | 'updatedAt'>;
 type LogData = Omit<ConversationLog, 'id' | 'personId' | 'createdAt'>;
+
+const PHOTO_DIR = `${FileSystem.documentDirectory}person_photos/`;
+
+async function persistPhoto(sourceUri: string): Promise<string> {
+  const dirInfo = await FileSystem.getInfoAsync(PHOTO_DIR);
+  if (!dirInfo.exists) {
+    await FileSystem.makeDirectoryAsync(PHOTO_DIR, { intermediates: true });
+  }
+  const extMatch = sourceUri.match(/\.([a-zA-Z0-9]+)(?:\?.*)?$/);
+  const ext = extMatch ? extMatch[1].toLowerCase() : 'jpg';
+  const filename = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const destUri = `${PHOTO_DIR}${filename}`;
+  await FileSystem.copyAsync({ from: sourceUri, to: destUri });
+  return destUri;
+}
 
 type Props = {
   mode: 'new' | 'edit';
@@ -82,8 +98,14 @@ export default function PersonForm({ mode, initialValues = {}, onSubmit, onLogAd
       aspect: [1, 1],
       quality: 0.8,
     });
-    if (!result.canceled) {
-      setPhotoUri(result.assets[0].uri);
+    if (result.canceled) return;
+
+    try {
+      const persistedUri = await persistPhoto(result.assets[0].uri);
+      setPhotoUri(persistedUri);
+    } catch (e: any) {
+      console.error('[PersonForm] persist photo error:', e);
+      Alert.alert('写真の保存に失敗しました', e?.message ?? String(e));
     }
   };
 

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Animated, Pressable, View, Text, Image, StyleSheet } from 'react-native';
 import { Person } from '../types';
 import { Colors, Spacing, FontSize, BorderRadius } from '../constants/theme';
@@ -27,6 +27,11 @@ function getInitials(name: string): string {
 
 export default function PersonCard({ person, lastMetDate, onPress }: Props) {
   const scale = useRef(new Animated.Value(1)).current;
+  const [photoFailed, setPhotoFailed] = useState(false);
+
+  useEffect(() => {
+    setPhotoFailed(false);
+  }, [person.photoUri]);
 
   const onPressIn = () =>
     Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 60, bounciness: 0 }).start();
@@ -35,13 +40,18 @@ export default function PersonCard({ person, lastMetDate, onPress }: Props) {
     Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 60, bounciness: 4 }).start();
 
   const hasLastMet = !!lastMetDate;
+  const photoUri = person.photoUri && !photoFailed ? person.photoUri : undefined;
 
   return (
     <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
       <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
         {/* Avatar */}
-        {person.photoUri ? (
-          <Image source={{ uri: person.photoUri }} style={styles.avatarPhoto} />
+        {photoUri ? (
+          <Image
+            source={{ uri: photoUri }}
+            style={styles.avatarPhoto}
+            onError={() => setPhotoFailed(true)}
+          />
         ) : (
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{getInitials(person.name)}</Text>

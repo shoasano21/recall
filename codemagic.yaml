@@ -1,0 +1,54 @@
+workflows:
+  ios-testflight:
+    name: iOS TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.shoas.recall
+      vars:
+        XCODE_WORKSPACE: "Recall.xcworkspace"
+        XCODE_SCHEME: "Recall"
+        BUNDLE_ID: "com.shoas.recall"
+      node: 20.11.0
+      xcode: latest
+      cocoapods: default
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: master
+          include: true
+    scripts:
+      - name: Install npm dependencies
+        script: |
+          npm install --legacy-peer-deps
+      - name: Expo prebuild (generate ios/)
+        script: |
+          npx expo prebuild --platform ios --clean --no-install
+      - name: Pod install
+        script: |
+          cd ios && pod install
+      - name: Set build number from App Store Connect
+        script: |
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APP_ID" || echo 0)
+          cd ios
+          agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
+      - name: Build ipa
+        script: |
+          xcode-project build-ipa \
+            --workspace "ios/$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
