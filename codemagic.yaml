@@ -20,7 +20,7 @@ workflows:
       events:
         - push
       branch_patterns:
-        - pattern: master
+        - pattern: main
           include: true
     scripts:
       - name: Install npm dependencies
