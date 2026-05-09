@@ -34,12 +34,30 @@ workflows:
           keychain initialize
       - name: Revoke all existing iOS distribution certificates (clean slate)
         script: |
-          # 過去ビルドで作られた孤児証明書を全消し
-          CERT_IDS=$(app-store-connect certificates list --type IOS_DISTRIBUTION --json | python3 -c "import json, sys; data=json.load(sys.stdin); print(' '.join([c['id'] for c in data]))" 2>/dev/null || echo "")
+          set -x
+          echo "=== Listing existing distribution certificates ==="
+          app-store-connect certificates list --type IOS_DISTRIBUTION --json > /tmp/certs.json
+          echo "--- Raw JSON ---"
+          cat /tmp/certs.json
+          echo "--- Extracted cert IDs ---"
+          CERT_IDS=$(python3 <<'PYEOF'
+import json
+with open('/tmp/certs.json') as f:
+    data = json.load(f)
+items = data if isinstance(data, list) else data.get('data', [])
+for c in items:
+    cert_id = c.get('id') or c.get('attributes', {}).get('id')
+    if cert_id:
+        print(cert_id)
+PYEOF
+)
+          echo "Cert IDs found: '$CERT_IDS'"
           for cert_id in $CERT_IDS; do
-            echo "Revoking certificate $cert_id"
-            app-store-connect certificates revoke "$cert_id" || true
+            echo "Revoking certificate: $cert_id"
+            app-store-connect certificates revoke "$cert_id" && echo "OK: $cert_id revoked" || echo "FAILED to revoke $cert_id"
           done
+          echo "=== Verifying all revoked ==="
+          app-store-connect certificates list --type IOS_DISTRIBUTION --json | head -50
       - name: Generate private key for certificate
         script: |
           openssl genrsa -out /tmp/cert_key.pem 2048
