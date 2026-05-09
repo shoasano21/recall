@@ -308,16 +308,18 @@ export default function HomeScreen() {
         </>
       )}
 
-      {/* ── FAB（タブバーの上）── */}
-      <Pressable
-        onPress={handleFab}
-        style={({ pressed }) => [
-          styles.fab,
-          { bottom: TAB_BAR_HEIGHT + insets.bottom + Spacing.md, opacity: pressed ? 0.85 : 1 },
-        ]}
-      >
-        <Ionicons name="add" size={36} color={Colors.white} />
-      </Pressable>
+      {/* ── FAB（人物タブのみ表示）── */}
+      {activeTab === 'persons' && (
+        <Pressable
+          onPress={handleFab}
+          style={({ pressed }) => [
+            styles.fab,
+            { bottom: TAB_BAR_HEIGHT + insets.bottom + Spacing.md, opacity: pressed ? 0.85 : 1 },
+          ]}
+        >
+          <Ionicons name="add" size={36} color={Colors.white} />
+        </Pressable>
+      )}
 
       {/* ── タブバー（一番下）── */}
       <View style={[styles.tabBar, { paddingBottom: insets.bottom, height: TAB_BAR_HEIGHT + insets.bottom }]}>

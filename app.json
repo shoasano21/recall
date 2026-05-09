@@ -8,9 +8,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "splash": {
-      "backgroundColor": "#5B8CFF"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.shoas.recall",
@@ -46,7 +43,16 @@
           "sounds": []
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#5B8CFF",
+          "dark": {
+            "backgroundColor": "#5B8CFF"
+          }
+        }
+      ]
     ],
     "_experiments": {
       "baseUrl": ""

@@ -57,6 +57,8 @@ export default function RootLayout() {
             headerStyle: { backgroundColor: Colors.white },
             headerTintColor: Colors.textPrimary,
             headerShadowVisible: false,
+            headerBackTitle: '',
+            headerBackButtonDisplayMode: 'minimal',
             contentStyle: { backgroundColor: Colors.background },
           }}
         >
