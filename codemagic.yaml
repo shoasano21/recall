@@ -55,17 +55,12 @@ workflows:
       - name: Set up code signing in Xcode project
         script: |
           cd ios && xcode-project use-profiles --warn-only
-      - name: Set build number (max of TestFlight and App Store +1)
+      - name: Set build number (Codemagic counter + offset to skip past Apple history)
         script: |
-          TF_BUILD=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" 2>/dev/null || echo 0)
-          AS_BUILD=$(app-store-connect get-latest-app-store-build-number "$BUNDLE_ID" 2>/dev/null || echo 0)
-          if [ "$TF_BUILD" -gt "$AS_BUILD" ]; then
-            LATEST=$TF_BUILD
-          else
-            LATEST=$AS_BUILD
-          fi
-          NEW_BUILD_NUMBER=$((LATEST + 1))
-          echo "TestFlight latest: $TF_BUILD, App Store latest: $AS_BUILD, using new build number: $NEW_BUILD_NUMBER"
+          # Codemagic の BUILD_NUMBER は workflow 単位で自動インクリメント
+          # +100 オフセットで EAS 時代に Apple 側に残った buildNumber 5 などを確実にスキップ
+          NEW_BUILD_NUMBER=$((BUILD_NUMBER + 100))
+          echo "Setting iOS bundle version to: $NEW_BUILD_NUMBER (Codemagic BUILD_NUMBER=$BUILD_NUMBER)"
           cd ios && agvtool new-version -all $NEW_BUILD_NUMBER
       - name: Build ipa
         script: |
