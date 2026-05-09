@@ -32,12 +32,19 @@ workflows:
       - name: Initialize keychain
         script: |
           keychain initialize
+      - name: Revoke all existing iOS distribution certificates (clean slate)
+        script: |
+          # 過去ビルドで作られた孤児証明書を全消ししてからやり直す
+          CERT_IDS=$(app-store-connect list-certificates --type IOS_DISTRIBUTION --json | python3 -c "import json, sys; print(' '.join([c['id'] for c in json.load(sys.stdin)]))" 2>/dev/null || echo "")
+          for cert_id in $CERT_IDS; do
+            echo "Revoking certificate $cert_id"
+            app-store-connect revoke-certificate "$cert_id" || true
+          done
       - name: Create new iOS distribution certificate
         script: |
           app-store-connect create-certificate \
             --type IOS_DISTRIBUTION \
-            --save \
-            || echo "Certificate creation skipped (may already exist with accessible key)"
+            --save
       - name: Fetch signing files
         script: |
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
